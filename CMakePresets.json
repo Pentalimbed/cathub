@@ -1,0 +1,76 @@
+{
+    "configurePresets": [
+        {
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": {
+                    "type": "STRING",
+                    "value": "Release"
+                }
+            },
+            "errors": {
+                "deprecated": true
+            },
+            "hidden": true,
+            "name": "cmake-dev",
+            "warnings": {
+                "deprecated": true,
+                "dev": true
+            }
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "STRING",
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                }
+            },
+            "hidden": true,
+            "name": "vcpkg"
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_MSVC_RUNTIME_LIBRARY": {
+                    "type": "STRING",
+                    "value": "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                },
+                "VCPKG_TARGET_TRIPLET": {
+                    "type": "STRING",
+                    "value": "x64-windows-static"
+                }
+            },
+            "hidden": true,
+            "name": "windows"
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 $penv{CXXFLAGS}"
+            },
+            "generator": "Visual Studio 17 2022",
+            "inherits": [
+                "cmake-dev",
+                "vcpkg",
+                "windows"
+            ],
+            "name": "vs2022-windows-vcpkg",
+            "toolset": "v143"
+        },
+        {
+            "cacheVariables": {
+                "BUILD_SE": "ON",
+                "SKYRIM_SUPPORT_AE": "OFF"
+            },
+            "inherits": "vs2022-windows-vcpkg",
+            "name": "se"
+        },
+        {
+            "cacheVariables": {
+                "BUILD_SE": "OFF",
+                "SKYRIM_SUPPORT_AE": "ON"
+            },
+            "inherits": "vs2022-windows-vcpkg",
+            "name": "ae"
+        }
+    ],
+    "version": 2
+}
