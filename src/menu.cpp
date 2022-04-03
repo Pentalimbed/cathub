@@ -206,16 +206,15 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
                 static auto mod_list = {DIK_LSHIFT, DIK_RSHIFT, DIK_LCONTROL, DIK_RCONTROL, DIK_LALT, DIK_RALT, DIK_LWIN, DIK_RWIN};
                 if (button->IsPressed() && !std::ranges::any_of(mod_list, [=](uint16_t scancode) { return scancode == key; }))
                 {
-                    toggle_key         = key;
-                    toggle_mod         = io.KeyMods;
+                    config.toggle_key  = key;
+                    config.toggle_mod  = io.KeyMods;
                     editing_toggle_key = false;
-                    SaveConfig();
                 }
             }
 
-            if (!show && io.KeyMods == toggle_mod && key == toggle_key)
+            if (io.KeyMods == config.toggle_mod && key == config.toggle_key)
             {
-                Toggle(true);
+                Toggle(!show);
             }
         }
     }
@@ -229,7 +228,12 @@ void CatMenu::Draw()
     io.MouseDrawCursor = show;
 
     if (!show)
+    {
+        RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = false;
         return;
+    }
+
+    RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = config.block_input;
 
     if (!ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoCollapse))
     {
@@ -276,15 +280,20 @@ void CatMenu::AddMenu(std::string name, std::function<void()> draw_func)
 
 void CatMenu::SettingMenu()
 {
+    // Save config
+    if (ImGui::Button("Save Config"))
+    {
+        SaveConfig();
+    }
+    // Toggle key
     auto toggle_str = editing_toggle_key ? "Type any key" : "Edit Toggle Key - ";
     ImGui::Checkbox(toggle_str, &editing_toggle_key);
-
     if (!editing_toggle_key)
     {
         ImGui::SameLine();
 
-        auto mod_str = modflag2String(toggle_mod);
-        auto key_str = scanCode2String(toggle_key);
+        auto mod_str = modflag2String(config.toggle_mod);
+        auto key_str = scanCode2String(config.toggle_key);
 
         if (key_str.empty())
         {
@@ -295,6 +304,18 @@ void CatMenu::SettingMenu()
             ImGui::Text((mod_str + key_str).c_str());
         }
     }
+    // Block input
+    ImGui::Checkbox("Blocking Player Control", &config.block_input);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Blocking player control when menu is opened.");
+    // Clear input
+    if (ImGui::Button("Clear Input Keys"))
+    {
+        ImGui::GetIO().ClearInputCharacters();
+        ImGui::GetIO().ClearInputKeys();
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("If you Alt+Tab switch windows back and forth,\nthose 2 keys tend to get stuck.\nClick this to unstuck any key.");
 }
 
 void CatMenu::SaveConfig()
@@ -306,8 +327,9 @@ void CatMenu::SaveConfig()
         return;
     }
     auto tbl = toml::table{
-        {"toggle_key", toggle_key},
-        {"toggle_mod", toggle_mod}};
+        {"toggle_key", config.toggle_key},
+        {"toggle_mod", config.toggle_mod},
+        {"block_input", config.block_input}};
     f << tbl;
 }
 } // namespace cathub
