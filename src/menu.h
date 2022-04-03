@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <mutex>
 #include <toml++/toml.h>
 
 namespace cathub
@@ -21,12 +22,10 @@ public:
 
     virtual RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;
     void                             Draw();
+    void                             AddMenu(std::string name, std::function<void()> draw_func);
 
-    inline void AddMenu(std::string name, std::function<void()> draw_func) { draw_funcs.push_back({name, draw_func}); }
     inline void Toggle(bool enabled) { show = enabled; }
     inline void NotifyInit() { imgui_inited = true; }
-
-
 
 private:
     CatMenu()
@@ -53,6 +52,7 @@ private:
     ImGuiKeyModFlags toggle_mod         = ImGuiKeyModFlags_None;
     uint32_t         toggle_key         = 43; // \ - Back Slash
 
+    std::mutex                                                 draw_funcs_mutex;
     std::vector<std::pair<std::string, std::function<void()>>> draw_funcs;
 
     void SettingMenu();

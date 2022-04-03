@@ -7,7 +7,6 @@ namespace cathub
 {
 void draw()
 {
-    // ImGui::ShowDemoWindow();
     CatMenu::GetSingleton()->Draw();
 }
 
@@ -15,17 +14,16 @@ void processMessage(SKSE::MessagingInterface::Message* a_msg)
 {
     switch (a_msg->type)
     {
-        case SKSE::MessagingInterface::kDataLoaded:
-            logger::debug("Data loaded");
-            RE::BSInputDeviceManager::GetSingleton()->AddEventSink(CatMenu::GetSingleton());
-            break;
         case SKSE::MessagingInterface::kPostLoad:
             logger::debug("Post load");
             DKUtil::GUI::InitD3D();
             DKUtil::GUI::AddCallback(FUNC_INFO(draw));
+            ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
             CatMenu::GetSingleton()->NotifyInit();
             break;
-        case SKSE::MessagingInterface::kPostLoadGame:
+        case SKSE::MessagingInterface::kDataLoaded:
+            logger::debug("Data loaded");
+            RE::BSInputDeviceManager::GetSingleton()->AddEventSink(CatMenu::GetSingleton());
             break;
         default:
             break;
@@ -114,12 +112,8 @@ extern "C"
         return true;
     }
 
-    DLLEXPORT MenuInfo* GetCatMenuInfo()
+    DLLEXPORT cathub::CatHubAPI* GetCatHubInterface()
     {
-        static MenuInfo info = {ImGui::GetCurrentContext,
-                                [&](std::string name, std::function<void()> func) {
-                                    cathub::CatMenu::GetSingleton()->AddMenu(name, func);
-                                }};
-        return std::addressof(info);
+        return cathub::CatHubInterface::getSingleton();
     }
 }

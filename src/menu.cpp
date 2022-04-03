@@ -132,14 +132,12 @@ namespace cathub
 {
 RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
 {
-    static auto mod_list = {DIK_LSHIFT, DIK_RSHIFT, DIK_LCONTROL, DIK_RCONTROL, DIK_LALT, DIK_RALT, DIK_LWIN, DIK_RWIN};
-
     if (!imgui_inited || !a_event || !a_eventSource)
         return RE::BSEventNotifyControl::kContinue;
 
     auto& io = ImGui::GetIO();
 
-    // if (RE::UI::GetSingleton()->GameIsPaused())
+    // if (!io.WantCaptureMouse || !io.WantCaptureKeyboard)
     // {
     //     io.ClearInputKeys();
     //     io.ClearInputCharacters();
@@ -205,6 +203,7 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
 
             if (editing_toggle_key)
             {
+                static auto mod_list = {DIK_LSHIFT, DIK_RSHIFT, DIK_LCONTROL, DIK_RCONTROL, DIK_LALT, DIK_RALT, DIK_LWIN, DIK_RWIN};
                 if (button->IsPressed() && !std::ranges::any_of(mod_list, [=](uint16_t scancode) { return scancode == key; }))
                 {
                     toggle_key         = key;
@@ -239,6 +238,8 @@ void CatMenu::Draw()
         return;
     }
 
+    ImGui::Separator();
+
     static int item_current = 0;
     struct Funcs
     {
@@ -249,16 +250,28 @@ void CatMenu::Draw()
             return true;
         }
     };
+
+    draw_funcs_mutex.lock();
+
     ImGui::Combo(
         "Selected Menu",
         &item_current,
         &Funcs::ItemGetter,
         draw_funcs.data(),
         draw_funcs.size());
-
     (draw_funcs[item_current].second)();
 
+    draw_funcs_mutex.unlock();
+
     ImGui::End();
+}
+
+void CatMenu::AddMenu(std::string name, std::function<void()> draw_func)
+{
+    logger::info("Adding menu {}", name);
+    draw_funcs_mutex.lock();
+    draw_funcs.push_back({name, draw_func});
+    draw_funcs_mutex.unlock();
 }
 
 void CatMenu::SettingMenu()

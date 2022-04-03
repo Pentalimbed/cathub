@@ -1,20 +1,18 @@
 #pragma once
+#include "cathub.h"
 
-struct MenuInfo
+namespace cathub
 {
-    std::function<ImGuiContext*()>                          get_ctx_func  = nullptr;
-    std::function<void(std::string, std::function<void()>)> add_menu_func = nullptr;
-};
-
-typedef MenuInfo* (*_GetCatMenuInfo)();
-
-inline MenuInfo* requestMenuInfo()
+class CatHubInterface : public CatHubAPI
 {
-    auto            pluginHandle = GetModuleHandle(L"CatHub.dll");
-    _GetCatMenuInfo requestFunc  = (_GetCatMenuInfo)GetProcAddress(pluginHandle, "GetCatMenuInfo");
-    if (requestFunc)
+public:
+    static CatHubInterface* getSingleton()
     {
-        return requestFunc();
+        static CatHubInterface face;
+        return std::addressof(face);
     }
-    return nullptr;
-}
+
+    virtual ImGuiContext* getContext() override;
+    virtual void          addMenu(std::string name, std::function<void()> draw_func) override;
+};
+} // namespace cathub
