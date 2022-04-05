@@ -1,10 +1,13 @@
 #include "menu.h"
+#include "utils.h"
 
 #include <Windows.h>
 #include <WinUser.h>
 #include <dinput.h>
 
-#include <utils.h>
+#include <DKUtil/GUI.hpp>
+
+#include "extern/imgui_stdlib.h"
 
 // copied from imgui win32 impl
 // Map VK_xxx to ImGuiKey_xxx.
@@ -153,7 +156,7 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
         {
 
             const auto button = static_cast<RE::ButtonEvent*>(event);
-            if (!button || (!button->IsPressed() && !button->IsUp()))
+            if (!button || (!button->IsDown() && !button->IsUp()))
                 continue;
 
             auto key = button->GetIDCode();
@@ -165,29 +168,29 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
                     else
                     {
                         if (key > 5) key = 5;
-                        io.AddMouseButtonEvent(key, button->IsPressed());
+                        io.AddMouseButtonEvent(key, button->IsDown());
                     }
                     key += kMouseOffset;
                     break;
                 case RE::INPUT_DEVICE::kKeyboard:
-                    io.AddKeyEvent(ImGui_ImplWin32_VirtualKeyToImGuiKey(MapVirtualKeyEx(key, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0))), button->IsPressed());
+                    io.AddKeyEvent(ImGui_ImplWin32_VirtualKeyToImGuiKey(MapVirtualKeyEx(key, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0))), button->IsDown());
                     switch (key)
                     {
                         case DIK_LCONTROL:
                         case DIK_RCONTROL:
-                            io.AddKeyEvent(ImGuiKey_ModCtrl, button->IsPressed());
+                            io.AddKeyEvent(ImGuiKey_ModCtrl, button->IsDown());
                             break;
                         case DIK_LSHIFT:
                         case DIK_RSHIFT:
-                            io.AddKeyEvent(ImGuiKey_ModShift, button->IsPressed());
+                            io.AddKeyEvent(ImGuiKey_ModShift, button->IsDown());
                             break;
                         case DIK_LALT:
                         case DIK_RALT:
-                            io.AddKeyEvent(ImGuiKey_ModAlt, button->IsPressed());
+                            io.AddKeyEvent(ImGuiKey_ModAlt, button->IsDown());
                             break;
                         case DIK_LWIN:
                         case DIK_RWIN:
-                            io.AddKeyEvent(ImGuiKey_ModSuper, button->IsPressed());
+                            io.AddKeyEvent(ImGuiKey_ModSuper, button->IsDown());
                             break;
                         default: break;
                     }
@@ -204,15 +207,14 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
             if (editing_toggle_key)
             {
                 static auto mod_list = {DIK_LSHIFT, DIK_RSHIFT, DIK_LCONTROL, DIK_RCONTROL, DIK_LALT, DIK_RALT, DIK_LWIN, DIK_RWIN};
-                if (button->IsPressed() && !std::ranges::any_of(mod_list, [=](uint16_t scancode) { return scancode == key; }))
+                if (button->IsDown() && !std::ranges::any_of(mod_list, [=](uint16_t scancode) { return scancode == key; }))
                 {
                     config.toggle_key  = key;
                     config.toggle_mod  = io.KeyMods;
                     editing_toggle_key = false;
                 }
             }
-
-            if (io.KeyMods == config.toggle_mod && key == config.toggle_key)
+            else if (button->IsDown() && io.KeyMods == config.toggle_mod && key == config.toggle_key)
             {
                 Toggle(!show);
             }
@@ -232,8 +234,10 @@ void CatMenu::Draw()
         RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = false;
         return;
     }
-
     RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = config.block_input;
+
+    if (font)
+        ImGui::PushFont(font);
 
     if (!ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoCollapse))
     {
@@ -241,8 +245,6 @@ void CatMenu::Draw()
         ImGui::End();
         return;
     }
-
-    ImGui::Separator();
 
     static int item_current = 0;
     struct Funcs
@@ -256,16 +258,18 @@ void CatMenu::Draw()
     };
 
     draw_funcs_mutex.lock();
-
     ImGui::Combo(
         "Selected Menu",
         &item_current,
         &Funcs::ItemGetter,
         draw_funcs.data(),
         draw_funcs.size());
+    ImGui::Separator();
     (draw_funcs[item_current].second)();
-
     draw_funcs_mutex.unlock();
+
+    if (font)
+        ImGui::PopFont();
 
     ImGui::End();
 }
@@ -280,42 +284,68 @@ void CatMenu::AddMenu(std::string name, std::function<void()> draw_func)
 
 void CatMenu::SettingMenu()
 {
+    auto io = ImGui::GetIO();
+
     // Save config
     if (ImGui::Button("Save Config"))
     {
         SaveConfig();
     }
-    // Toggle key
-    auto toggle_str = editing_toggle_key ? "Type any key" : "Edit Toggle Key - ";
-    ImGui::Checkbox(toggle_str, &editing_toggle_key);
-    if (!editing_toggle_key)
-    {
-        ImGui::SameLine();
 
-        auto mod_str = modflag2String(config.toggle_mod);
-        auto key_str = scanCode2String(config.toggle_key);
-
-        if (key_str.empty())
-        {
-            ImGui::Text((mod_str + "[Unknown Key]").c_str());
-        }
-        else
-        {
-            ImGui::Text((mod_str + key_str).c_str());
-        }
-    }
-    // Block input
-    ImGui::Checkbox("Blocking Player Control", &config.block_input);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Blocking player control when menu is opened.");
-    // Clear input
-    if (ImGui::Button("Clear Input Keys"))
+    if (ImGui::TreeNode("Input"))
     {
-        ImGui::GetIO().ClearInputCharacters();
-        ImGui::GetIO().ClearInputKeys();
+        // Toggle key
+        auto toggle_str = editing_toggle_key ? "Type any key" : "Edit Toggle Key - ";
+        ImGui::Checkbox(toggle_str, &editing_toggle_key);
+        if (!editing_toggle_key)
+        {
+            ImGui::SameLine();
+
+            auto mod_str = modflag2String(config.toggle_mod);
+            auto key_str = scanCode2String(config.toggle_key);
+
+            ImGui::AlignTextToFramePadding();
+            if (key_str.empty())
+                ImGui::Text((mod_str + "[Unknown Key]").c_str());
+            else
+                ImGui::Text((mod_str + key_str).c_str());
+        }
+        // Block input
+        ImGui::Checkbox("Blocking Player Control", &config.block_input);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Blocking player control when menu is opened.");
+        // Clear input
+        if (ImGui::Button("Clear Input Keys"))
+        {
+            io.ClearInputCharacters();
+            io.ClearInputKeys();
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("If you Alt+Tab switch windows back and forth,\nthose 2 keys tend to get stuck.\nClick this to unstuck any key.");
+
+        ImGui::TreePop();
     }
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("If you Alt+Tab switch windows back and forth,\nthose 2 keys tend to get stuck.\nClick this to unstuck any key.");
+
+    if (ImGui::TreeNode("Font"))
+    {
+        ImGui::InputTextWithHint("Font", "Enter ttf/otf font path e.g. \"C:/Windows/Fonts/NotoSans-Regular.ttf\"", &config.font_path);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Restart game to apply.");
+        ImGui::SliderFloat("Font Size", &config.font_size, 8.0f, 40.0f, "%.1f");
+        if (ImGui::TreeNode("Extra Glyphs"))
+        {
+            ImGui::Checkbox("Chinese-Full", &config.glyph_chn_full), ImGui::SameLine();
+            ImGui::Checkbox("Chinese-Common Simplified", &config.glyph_chs_common), ImGui::SameLine();
+            ImGui::Checkbox("Cyrillic", &config.glyph_cyr);
+            ImGui::Checkbox("Japanese", &config.glyph_jap), ImGui::SameLine();
+            ImGui::Checkbox("Korean", &config.glyph_kor), ImGui::SameLine();
+            ImGui::Checkbox("Thai", &config.glyph_thai), ImGui::SameLine();
+            ImGui::Checkbox("Vietnamese", &config.glyph_viet);
+
+            ImGui::TreePop();
+        }
+        ImGui::TreePop();
+    }
 }
 
 void CatMenu::SaveConfig()
@@ -329,7 +359,46 @@ void CatMenu::SaveConfig()
     auto tbl = toml::table{
         {"toggle_key", config.toggle_key},
         {"toggle_mod", config.toggle_mod},
-        {"block_input", config.block_input}};
+        {"block_input", config.block_input},
+        {"font_path", config.font_path},
+        {"font_size", config.font_size},
+        {"glyph_chn_full", config.glyph_chn_full},
+        {"glyph_chs_common", config.glyph_chs_common},
+        {"glyph_cyr", config.glyph_cyr},
+        {"glyph_jap", config.glyph_jap},
+        {"glyph_kor", config.glyph_kor},
+        {"glyph_thai", config.glyph_thai},
+        {"glyph_viet", config.glyph_viet}};
     f << tbl;
+}
+
+void CatMenu::LoadFont()
+{
+    auto     io   = ImGui::GetIO();
+    fs::path path = (config.font_path);
+    if (fs::is_regular_file(path) && ((path.extension() == ".ttf") || (path.extension() == ".otf")))
+    {
+        ImVector<ImWchar>        ranges;
+        ImFontGlyphRangesBuilder builder;
+        if (config.glyph_chn_full) builder.AddRanges(io.Fonts->GetGlyphRangesChineseFull());
+        if (config.glyph_chs_common) builder.AddRanges(io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+        if (config.glyph_cyr) builder.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
+        if (config.glyph_jap) builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
+        if (config.glyph_kor) builder.AddRanges(io.Fonts->GetGlyphRangesKorean());
+        if (config.glyph_thai) builder.AddRanges(io.Fonts->GetGlyphRangesThai());
+        if (config.glyph_viet) builder.AddRanges(io.Fonts->GetGlyphRangesVietnamese());
+        builder.BuildRanges(&ranges);
+
+        io.Fonts->Clear();
+        font = io.Fonts->AddFontFromFileTTF(config.font_path.c_str(), config.font_size, NULL, ranges.Data);
+        io.Fonts->Build();
+    }
+    else
+    {
+        io.Fonts->Clear();
+        io.Fonts->AddFontDefault();
+        io.Fonts->Build();
+        logger::info("{} is not a font file", config.font_path);
+    }
 }
 } // namespace cathub

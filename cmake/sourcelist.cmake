@@ -3,4 +3,6 @@ set(sources ${sources}
 	src/PCH.cpp
 	src/menu.cpp
 	src/interface.cpp
+
+	src/extern/imgui_stdlib.cpp
 )
