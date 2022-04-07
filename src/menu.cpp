@@ -238,6 +238,7 @@ void CatMenu::Draw()
 
     if (font)
         ImGui::PushFont(font);
+    ImGui::GetStyle().ScaleAllSizes(config.font_scaling);
 
     if (!ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoCollapse))
     {
@@ -332,6 +333,8 @@ void CatMenu::SettingMenu()
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Restart game to apply.");
         ImGui::SliderFloat("Font Size", &config.font_size, 8.0f, 40.0f, "%.1f");
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Control how big the font is.\nOnly applies for custom fonts.");
         if (ImGui::TreeNode("Extra Glyphs"))
         {
             ImGui::Checkbox("Chinese-Full", &config.glyph_chn_full), ImGui::SameLine();

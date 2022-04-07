@@ -80,6 +80,7 @@ extern "C"
         return true;
     }
 
+#ifndef BUILD_SE
     DLLEXPORT constinit auto SKSEPlugin_Version = []() {
         SKSE::PluginVersionData v;
 
@@ -90,9 +91,9 @@ extern "C"
         v.CompatibleVersions({SKSE::RUNTIME_LATEST});
 
         return v;
-    }();
+    };
+#endif
 
-#ifndef BUILD_SE
     DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
     {
         installLog();
@@ -112,7 +113,6 @@ extern "C"
 
         return true;
     }
-#endif
 
     DLLEXPORT cathub::CatHubAPI* GetCatHubInterface()
     {

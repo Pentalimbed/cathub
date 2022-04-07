@@ -19,6 +19,7 @@ struct CatMenuConfig
 
     std::string font_path        = "";
     float       font_size        = 13.0f;
+    float       font_scaling     = 1.0f;
     bool        glyph_chn_full   = false;
     bool        glyph_chs_common = false;
     bool        glyph_cyr        = false;
