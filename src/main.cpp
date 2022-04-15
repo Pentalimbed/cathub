@@ -15,14 +15,12 @@ void processMessage(SKSE::MessagingInterface::Message* a_msg)
     switch (a_msg->type)
     {
         case SKSE::MessagingInterface::kPostLoad:
-            logger::debug("Post load");
             DKUtil::GUI::InitD3D();
             CatMenu::GetSingleton()->LoadFont();
             DKUtil::GUI::AddCallback(FUNC_INFO(draw));
             CatMenu::GetSingleton()->NotifyInit();
             break;
         case SKSE::MessagingInterface::kDataLoaded:
-            logger::debug("Data loaded");
             RE::BSInputDeviceManager::GetSingleton()->AddEventSink(CatMenu::GetSingleton());
             break;
         default:
@@ -81,7 +79,7 @@ extern "C"
     }
 
 #ifndef BUILD_SE
-    DLLEXPORT constinit auto SKSEPlugin_Version = []() {
+    extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
         SKSE::PluginVersionData v;
 
         v.PluginVersion(Version::VERSION);
@@ -91,7 +89,7 @@ extern "C"
         v.CompatibleVersions({SKSE::RUNTIME_LATEST});
 
         return v;
-    };
+    }();
 #endif
 
     DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)

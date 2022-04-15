@@ -4,6 +4,7 @@ set(headers ${headers}
 	src/utils.h
 	src/cathub.h
 	src/interface.h
+	src/styles.h
 
 	src/extern/imgui_stdlib.h
 )

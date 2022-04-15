@@ -154,7 +154,6 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
         }
         else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton)
         {
-
             const auto button = static_cast<RE::ButtonEvent*>(event);
             if (!button || (!button->IsDown() && !button->IsUp()))
                 continue;
@@ -231,10 +230,8 @@ void CatMenu::Draw()
 
     if (!show)
     {
-        RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = false;
         return;
     }
-    RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = config.block_input;
 
     if (font)
         ImGui::PushFont(font);
@@ -334,7 +331,7 @@ void CatMenu::SettingMenu()
             ImGui::SetTooltip("Restart game to apply.");
         ImGui::SliderFloat("Font Size", &config.font_size, 8.0f, 40.0f, "%.1f");
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Control how big the font is.\nOnly applies for custom fonts.");
+            ImGui::SetTooltip("Control how big the font is.\nOnly applies to custom fonts.");
         if (ImGui::TreeNode("Extra Glyphs"))
         {
             ImGui::Checkbox("Chinese-Full", &config.glyph_chn_full), ImGui::SameLine();
@@ -348,6 +345,30 @@ void CatMenu::SettingMenu()
             ImGui::TreePop();
         }
         ImGui::TreePop();
+    }
+
+    static int current_item = 0;
+    struct Funcs
+    {
+        static bool ItemGetter(void* data, int n, const char** out_str)
+        {
+            auto vec = (decltype(styles.data()))data;
+            *out_str = vec[n].first.c_str();
+            return true;
+        }
+    };
+
+    if (ImGui::Combo(
+            "Style",
+            &current_item,
+            &Funcs::ItemGetter,
+            styles.data(),
+            styles.size()))
+    {
+        auto& style  = ImGui::GetStyle();
+        style        = ImGuiStyle();
+        config.style = styles[current_item].first;
+        styles[current_item].second();
     }
 }
 
@@ -371,7 +392,8 @@ void CatMenu::SaveConfig()
         {"glyph_jap", config.glyph_jap},
         {"glyph_kor", config.glyph_kor},
         {"glyph_thai", config.glyph_thai},
-        {"glyph_viet", config.glyph_viet}};
+        {"glyph_viet", config.glyph_viet},
+        {"style", config.style}};
     f << tbl;
 }
 

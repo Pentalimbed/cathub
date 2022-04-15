@@ -2,15 +2,37 @@
 
 #include <Windows.h>
 #include <WinUser.h>
-#include <dinput.h>
+#include <xinput.h>
 
 enum : uint32_t
 {
     kInvalid        = static_cast<uint32_t>(-1),
     kKeyboardOffset = 0,
     kMouseOffset    = 256,
-    kGamepadOffset  = 266
+    kGamepadOffset  = 266,
+    kMaxOffset      = 282
 };
+
+enum
+{
+    kGamepadButtonOffset_DPAD_UP = kGamepadOffset, // 266
+    kGamepadButtonOffset_DPAD_DOWN,
+    kGamepadButtonOffset_DPAD_LEFT,
+    kGamepadButtonOffset_DPAD_RIGHT,
+    kGamepadButtonOffset_START,
+    kGamepadButtonOffset_BACK,
+    kGamepadButtonOffset_LEFT_THUMB,
+    kGamepadButtonOffset_RIGHT_THUMB,
+    kGamepadButtonOffset_LEFT_SHOULDER,
+    kGamepadButtonOffset_RIGHT_SHOULDER,
+    kGamepadButtonOffset_A,
+    kGamepadButtonOffset_B,
+    kGamepadButtonOffset_X,
+    kGamepadButtonOffset_Y,
+    kGamepadButtonOffset_LT,
+    kGamepadButtonOffset_RT // 281
+};
+
 
 inline std::string modflag2String(ImGuiKeyModFlags modflag)
 {
@@ -28,7 +50,11 @@ inline std::string modflag2String(ImGuiKeyModFlags modflag)
 
 inline std::string scanCode2String(uint32_t scancode)
 {
-    if (scancode >= kGamepadOffset)
+    if (scancode >= kMaxOffset)
+    {
+        return "";
+    }
+    else if (scancode >= kGamepadOffset)
     {
         // not implemented
         return "";

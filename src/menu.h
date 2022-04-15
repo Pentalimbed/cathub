@@ -4,6 +4,8 @@
 #include <mutex>
 #include <toml++/toml.h>
 
+#include "styles.h"
+
 namespace cathub
 {
 namespace fs = std::filesystem;
@@ -27,6 +29,8 @@ struct CatMenuConfig
     bool        glyph_kor        = false;
     bool        glyph_thai       = false;
     bool        glyph_viet       = false;
+
+    std::string style = "Default";
 };
 
 class CatMenu : public RE::BSTEventSink<RE::InputEvent*>
@@ -43,10 +47,24 @@ public:
     void                             AddMenu(std::string name, std::function<void()> draw_func);
     void                             LoadFont();
 
-    inline void Toggle(bool enabled) { show = enabled; }
+    inline void Toggle(bool enabled)
+    {
+        show = enabled;
+
+        RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = show ? config.block_input : false;
+    }
     inline void NotifyInit()
     {
         ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        bool has_style = false;
+        for (auto& [name, func] : styles)
+            if (name == config.style)
+            {
+                has_style = true;
+                func();
+            }
+        if (!has_style)
+            config.style = "Default";
         imgui_inited = true;
     }
 
@@ -72,6 +90,8 @@ private:
             config.glyph_kor        = tbl["glyph_kor"].value_or<bool>(false);
             config.glyph_thai       = tbl["glyph_thai"].value_or<bool>(false);
             config.glyph_viet       = tbl["glyph_viet"].value_or<bool>(false);
+
+            config.style = tbl["style"].value_or<std::string>("Default");
         }
         catch (const toml::parse_error& err)
         {
