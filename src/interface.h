@@ -14,5 +14,6 @@ public:
 
     virtual ImGuiContext* getContext() override;
     virtual void          addMenu(std::string name, std::function<void()> draw_func) override;
+    virtual void          addDrawCallback(std::function<void()> draw_func) override;
 };
 } // namespace cathub

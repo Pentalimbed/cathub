@@ -1,7 +1,6 @@
-#include "DKUtil/GUI.hpp"
-
 #include "menu.h"
 #include "interface.h"
+#include "render.h"
 
 namespace cathub
 {
@@ -10,17 +9,18 @@ void draw()
     CatMenu::GetSingleton()->Draw();
 }
 
+void loadFont()
+{
+    CatMenu::GetSingleton()->LoadFont();
+}
+
 void processMessage(SKSE::MessagingInterface::Message* a_msg)
 {
     switch (a_msg->type)
     {
-        case SKSE::MessagingInterface::kPostLoad:
-            DKUtil::GUI::InitD3D();
-            CatMenu::GetSingleton()->LoadFont();
-            DKUtil::GUI::AddCallback(FUNC_INFO(draw));
-            CatMenu::GetSingleton()->NotifyInit();
-            break;
         case SKSE::MessagingInterface::kDataLoaded:
+            logger::info("Data Loaded");
+            CatMenu::GetSingleton()->reload_font.store(true);
             RE::BSInputDeviceManager::GetSingleton()->AddEventSink(CatMenu::GetSingleton());
             break;
         default:
@@ -99,9 +99,18 @@ extern "C"
         logger::info("loaded plugin");
 
         SKSE::Init(a_skse);
-        SKSE::AllocTrampoline(1 << 4);
+        SKSE::AllocTrampoline(14 * 2);
 
         using namespace cathub;
+
+        D3DInitHook::post_init_callbacks.push_back([]() {
+            DXGIPresentHook::callback_mutex.lock();
+            DXGIPresentHook::pre_callbacks.push_back(loadFont);
+            DXGIPresentHook::mid_callbacks.push_back(draw);
+            DXGIPresentHook::callback_mutex.unlock();
+            CatMenu::GetSingleton()->NotifyInit(); });
+        stl::write_thunk_call<D3DInitHook>();
+        stl::write_thunk_call<DXGIPresentHook>();
 
         auto messaging = SKSE::GetMessagingInterface();
         if (!messaging->RegisterListener("SKSE", processMessage))

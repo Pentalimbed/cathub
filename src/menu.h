@@ -8,6 +8,7 @@
 
 namespace cathub
 {
+
 namespace fs = std::filesystem;
 
 const fs::path plugin_dir  = "Data\\SKSE\\Plugins";
@@ -15,9 +16,9 @@ const fs::path config_path = "CatHub.toml";
 
 struct CatMenuConfig
 {
-    uint32_t         toggle_key  = 43; // \ - Back Slash
-    ImGuiKeyModFlags toggle_mod  = ImGuiKeyModFlags_None;
-    bool             block_input = false;
+    uint32_t         toggle_key = 43; // \ - Back Slash
+    ImGuiKeyModFlags toggle_mod = ImGuiKeyModFlags_None;
+    // bool             block_input = false;
 
     std::string font_path        = "";
     float       font_size        = 13.0f;
@@ -49,13 +50,15 @@ public:
 
     inline void Toggle(bool enabled)
     {
+        auto& io = ImGui::GetIO();
+        io.ClearInputCharacters();
+        io.ClearInputKeys();
         show = enabled;
-
-        RE::ControlMap::GetSingleton()->ignoreKeyboardMouse = show ? config.block_input : false;
     }
     inline void NotifyInit()
     {
-        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        logger::info("CatMenu Initialized!");
+
         bool has_style = false;
         for (auto& [name, func] : styles)
             if (name == config.style)
@@ -68,18 +71,22 @@ public:
         imgui_inited = true;
     }
 
+    std::atomic<bool> reload_font = false;
+
 private:
     CatMenu()
     {
+        logger::info("Loading CatMenu!");
+
         draw_funcs.push_back({"General Setting", [&]() {
                                   SettingMenu();
                               }});
         try
         {
-            auto tbl           = toml::parse_file((plugin_dir / config_path).string());
-            config.toggle_key  = tbl["toggle_key"].value_or<int64_t>(43);
-            config.toggle_mod  = tbl["toggle_mod"].value_or<int64_t>(ImGuiKeyModFlags_None);
-            config.block_input = tbl["block_input"].value_or<bool>(false);
+            auto tbl          = toml::parse_file((plugin_dir / config_path).string());
+            config.toggle_key = tbl["toggle_key"].value_or<int64_t>(43);
+            config.toggle_mod = tbl["toggle_mod"].value_or<int64_t>(ImGuiKeyModFlags_None);
+            // config.block_input = tbl["block_input"].value_or<bool>(false);
 
             config.font_path        = tbl["font_path"].value_or<std::string>("");
             config.font_size        = tbl["font_size"].value_or<double>(13.0);

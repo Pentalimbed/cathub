@@ -5,6 +5,10 @@ set(headers ${headers}
 	src/cathub.h
 	src/interface.h
 	src/styles.h
+	src/render.h
 
 	src/extern/imgui_stdlib.h
+	src/extern/imgui_impl_dx11.cpp
+
+	src/skse/NiRenderer.h
 )

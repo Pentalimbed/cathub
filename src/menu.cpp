@@ -5,9 +5,8 @@
 #include <WinUser.h>
 #include <dinput.h>
 
-#include <DKUtil/GUI.hpp>
-
 #include "extern/imgui_stdlib.h"
+#include "extern/imgui_impl_dx11.h"
 
 // copied from imgui win32 impl
 // Map VK_xxx to ImGuiKey_xxx.
@@ -133,18 +132,13 @@ public:
 
 namespace cathub
 {
+
 RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
 {
     if (!imgui_inited || !a_event || !a_eventSource)
         return RE::BSEventNotifyControl::kContinue;
 
     auto& io = ImGui::GetIO();
-
-    // if (!io.WantCaptureMouse || !io.WantCaptureKeyboard)
-    // {
-    //     io.ClearInputKeys();
-    //     io.ClearInputCharacters();
-    // }
 
     for (auto event = *a_event; event; event = event->next)
     {
@@ -225,13 +219,14 @@ RE::BSEventNotifyControl CatMenu::ProcessEvent(RE::InputEvent* const* a_event, R
 
 void CatMenu::Draw()
 {
+    if (!imgui_inited)
+        return;
+
     auto& io           = ImGui::GetIO();
     io.MouseDrawCursor = show;
 
     if (!show)
-    {
         return;
-    }
 
     if (font)
         ImGui::PushFont(font);
@@ -309,9 +304,9 @@ void CatMenu::SettingMenu()
                 ImGui::Text((mod_str + key_str).c_str());
         }
         // Block input
-        ImGui::Checkbox("Blocking Player Control", &config.block_input);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Blocking player control when menu is opened.");
+        // ImGui::Checkbox("Blocking Player Control", &config.block_input);
+        // if (ImGui::IsItemHovered())
+        //     ImGui::SetTooltip("Blocking player control when menu is opened.");
         // Clear input
         if (ImGui::Button("Clear Input Keys"))
         {
@@ -326,6 +321,8 @@ void CatMenu::SettingMenu()
 
     if (ImGui::TreeNode("Font"))
     {
+        if (ImGui::Button("Refresh Font"))
+            reload_font.store(true);
         ImGui::InputTextWithHint("Font", "Enter ttf/otf font path e.g. \"C:/Windows/Fonts/NotoSans-Regular.ttf\"", &config.font_path);
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Restart game to apply.");
@@ -383,7 +380,7 @@ void CatMenu::SaveConfig()
     auto tbl = toml::table{
         {"toggle_key", config.toggle_key},
         {"toggle_mod", config.toggle_mod},
-        {"block_input", config.block_input},
+        // {"block_input", config.block_input},
         {"font_path", config.font_path},
         {"font_size", config.font_size},
         {"glyph_chn_full", config.glyph_chn_full},
@@ -399,12 +396,19 @@ void CatMenu::SaveConfig()
 
 void CatMenu::LoadFont()
 {
+    if (!reload_font.load())
+        return;
+    reload_font.store(false);
+
+    logger::info("Loading fonts!");
+
     auto     io   = ImGui::GetIO();
     fs::path path = (config.font_path);
     if (fs::is_regular_file(path) && ((path.extension() == ".ttf") || (path.extension() == ".otf")))
     {
         ImVector<ImWchar>        ranges;
         ImFontGlyphRangesBuilder builder;
+        builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
         if (config.glyph_chn_full) builder.AddRanges(io.Fonts->GetGlyphRangesChineseFull());
         if (config.glyph_chs_common) builder.AddRanges(io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
         if (config.glyph_cyr) builder.AddRanges(io.Fonts->GetGlyphRangesCyrillic());
@@ -415,15 +419,26 @@ void CatMenu::LoadFont()
         builder.BuildRanges(&ranges);
 
         io.Fonts->Clear();
+        io.Fonts->AddFontDefault();
         font = io.Fonts->AddFontFromFileTTF(config.font_path.c_str(), config.font_size, NULL, ranges.Data);
-        io.Fonts->Build();
+        if (io.Fonts->Build())
+        {
+            ImGui_ImplDX11_ReCreateFontsTexture();
+            return;
+        }
+        else
+            logger::error("Failed to build font {}", config.font_path);
     }
     else
     {
-        io.Fonts->Clear();
-        io.Fonts->AddFontDefault();
-        io.Fonts->Build();
+        font = nullptr;
         logger::info("{} is not a font file", config.font_path);
     }
+
+    io.Fonts->Clear();
+    io.Fonts->AddFontDefault();
+    assert(io.Fonts->Build());
+
+    ImGui_ImplDX11_ReCreateFontsTexture();
 }
 } // namespace cathub

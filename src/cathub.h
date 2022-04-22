@@ -1,5 +1,6 @@
 #pragma once
 
+#include <imgui.h>
 #include <Windows.h>
 
 namespace cathub
@@ -9,6 +10,7 @@ class CatHubAPI
 public:
     virtual ImGuiContext* getContext()                                               = 0;
     virtual void          addMenu(std::string name, std::function<void()> draw_func) = 0;
+    virtual void          addDrawCallback(std::function<void()> draw_func)           = 0;
 };
 
 typedef cathub::CatHubAPI* (*_RequestCatHubAPI)();

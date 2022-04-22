@@ -19,12 +19,10 @@ else ()
 endif ()
 
 set(CommonLibSSEPath "E:/dev/projects/SKSE/CommonLibSSE")
-set(DKUtilPath "E:/dev/projects/SKSE/DKUtil")
 
 set_from_environment(Skyrim64Path)
 set_from_environment(VCPKG_ROOT)
 set_from_environment(CommonLibSSEPath)
-set_from_environment(DKUtilPath)
 
 if (DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -84,15 +82,6 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS ON)
 
 # ---- Dependencies ----
-
-if (DEFINED DKUtilPath AND NOT ${DKUtilPath} STREQUAL "" AND IS_DIRECTORY ${DKUtilPath})
-	add_subdirectory(${DKUtilPath} DKUtil)
-else ()
-	message(
-		FATAL_ERROR
-		"Variable DKUtilPath is not set."
-	)
-endif ()
 
 if (DEFINED CommonLibSSEPath AND NOT ${CommonLibSSEPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibSSEPath})
 	add_subdirectory(${CommonLibSSEPath} CommonLibSSE)
@@ -163,7 +152,6 @@ target_link_libraries(
 	PRIVATE
 		CommonLibSSE::CommonLibSSE
 		spdlog::spdlog
-		DKUtil::DKUtil
 		imgui::imgui
 )
 
