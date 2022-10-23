@@ -1,41 +1,19 @@
+#include "render.h"
+#include "input.h"
 #include "menu.h"
 #include "interface.h"
-#include "render.h"
+
+#include <spdlog/sinks/basic_file_sink.h>
 
 namespace cathub
 {
-void draw()
-{
-    CatMenu::GetSingleton()->Draw();
-}
-
-void loadFont()
-{
-    CatMenu::GetSingleton()->LoadFont();
-}
-
-void processMessage(SKSE::MessagingInterface::Message* a_msg)
-{
-    switch (a_msg->type)
-    {
-        case SKSE::MessagingInterface::kDataLoaded:
-            logger::info("Data Loaded");
-            CatMenu::GetSingleton()->reload_font.store(true);
-            RE::BSInputDeviceManager::GetSingleton()->AddEventSink(CatMenu::GetSingleton());
-            break;
-        default:
-            break;
-    }
-}
-} // namespace cathub
-
 bool installLog()
 {
     auto path = logger::log_directory();
     if (!path)
         return false;
 
-    *path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
+    *path /= fmt::format(FMT_STRING("{}.log"), SKSE::PluginDeclaration::GetSingleton()->GetName());
     auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
 
     auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
@@ -54,75 +32,59 @@ bool installLog()
     return true;
 }
 
-extern "C"
+void postInitCallback()
 {
-    DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
+    DXGIPresentHook::callback_mutex.lock();
+    DXGIPresentHook::pre_callbacks.push_back([]() { CatMenu::GetSingleton()->loadFont(); });
+    DXGIPresentHook::mid_callbacks.push_back([]() { CatMenu::GetSingleton()->draw(); });
+    DXGIPresentHook::callback_mutex.unlock();
+    CatMenu::GetSingleton()->notifyInit();
+    InputListener::GetSingleton()->enabled.store(true);
+}
+
+void processMessage(SKSE::MessagingInterface::Message* a_msg)
+{
+    switch (a_msg->type)
     {
-        a_info->infoVersion = SKSE::PluginInfo::kVersion;
-        a_info->name        = Version::PROJECT.data();
-        a_info->version     = Version::VERSION[0];
-
-        if (a_skse->IsEditor())
-        {
-            logger::critical("Loaded in editor, marking as incompatible"sv);
-            return false;
-        }
-
-        const auto ver = a_skse->RuntimeVersion();
-        if (ver < SKSE::RUNTIME_1_5_39)
-        {
-            logger::critical(FMT_STRING("Unsupported runtime version {}"), ver.string());
-            return false;
-        }
-
-        return true;
+        case SKSE::MessagingInterface::kDataLoaded:
+            logger::info("Game: data loaded");
+            CatMenu::GetSingleton()->notifyFontReload();
+            RE::BSInputDeviceManager::GetSingleton()->AddEventSink(InputListener::GetSingleton());
+            logger::info("Input listener registered");
+            break;
+        default:
+            break;
     }
+}
+} // namespace cathub
 
-#ifndef BUILD_SE
-    extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-        SKSE::PluginVersionData v;
+SKSEPluginLoad(const SKSE::LoadInterface* skse)
+{
+    using namespace cathub;
 
-        v.PluginVersion(Version::VERSION);
-        v.PluginName(Version::PROJECT);
+    installLog();
 
-        v.UsesAddressLibrary(true);
-        v.CompatibleVersions({SKSE::RUNTIME_LATEST});
+    auto* plugin  = SKSE::PluginDeclaration::GetSingleton();
+    auto  version = plugin->GetVersion();
+    logger::info("{} {} is loading...", plugin->GetName(), version);
 
-        return v;
-    }();
-#endif
+    SKSE::Init(skse);
+    SKSE::AllocTrampoline(14 * 2);
 
-    DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
-    {
-        installLog();
+    D3DInitHook::post_init_callbacks.push_back(postInitCallback);
+    stl::write_thunk_call<D3DInitHook>();
+    stl::write_thunk_call<DXGIPresentHook>();
 
-        logger::info("loaded plugin");
+    auto messaging = SKSE::GetMessagingInterface();
+    if (!messaging->RegisterListener("SKSE", processMessage))
+        return false;
 
-        SKSE::Init(a_skse);
-        SKSE::AllocTrampoline(14 * 2);
+    logger::info("{} has finished loading.", plugin->GetName());
+    return true;
+}
 
-        using namespace cathub;
-
-        D3DInitHook::post_init_callbacks.push_back([]() {
-            DXGIPresentHook::callback_mutex.lock();
-            DXGIPresentHook::pre_callbacks.push_back(loadFont);
-            DXGIPresentHook::mid_callbacks.push_back(draw);
-            DXGIPresentHook::callback_mutex.unlock();
-            CatMenu::GetSingleton()->NotifyInit(); });
-        stl::write_thunk_call<D3DInitHook>();
-        stl::write_thunk_call<DXGIPresentHook>();
-
-        auto messaging = SKSE::GetMessagingInterface();
-        if (!messaging->RegisterListener("SKSE", processMessage))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    DLLEXPORT cathub::CatHubAPI* GetCatHubInterface()
-    {
-        return cathub::CatHubInterface::getSingleton();
-    }
+// API function
+extern "C" __declspec(dllexport) cathub::CatHubAPI* GetCatHubInterface()
+{
+    return cathub::CatHubInterface::getSingleton();
 }

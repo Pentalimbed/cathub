@@ -1,8 +1,9 @@
 #include "render.h"
 
-#include "skse/NiRenderer.h"
 #include "extern/imgui_impl_dx11.h"
 #include <imgui_impl_win32.h>
+
+#include <dxgi.h>
 
 namespace cathub
 {
@@ -24,15 +25,16 @@ void D3DInitHook::thunk()
     func();
 
     logger::info("D3DInit Hooked!");
-    auto render_manager = BSRenderManager::GetSingleton();
+    auto render_manager = RE::BSRenderManager::GetSingleton();
     if (!render_manager)
     {
         logger::error("Cannot find render manager. Initialization failed!");
         return;
     }
+    auto render_data = render_manager->GetRuntimeData();
 
     logger::info("Getting swapchain...");
-    auto swapchain = render_manager->swapChain;
+    auto swapchain = render_data.swapChain;
     if (!swapchain)
     {
         logger::error("Cannot find swapchain. Initialization failed!");
@@ -47,8 +49,8 @@ void D3DInitHook::thunk()
         return;
     }
 
-    auto device  = render_manager->forwarder;
-    auto context = render_manager->context;
+    auto device  = render_data.forwarder;
+    auto context = render_data.context;
 
     logger::info("Initializing ImGui...");
     ImGui::CreateContext();
@@ -57,22 +59,20 @@ void D3DInitHook::thunk()
         logger::error("ImGui initialization failed (Win32)");
         return;
     }
-
     if (!ImGui_ImplDX11_Init(device, context))
     {
         logger::error("ImGui initialization failed (DX11)");
         return;
     }
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
     logger::info("ImGui initialized!");
 
     initialized.store(true);
 
-    WndProcHook::func = reinterpret_cast<WNDPROC>(SetWindowLongPtrA(
-        sd.OutputWindow,
-        GWLP_WNDPROC,
-        reinterpret_cast<LONG_PTR>(WndProcHook::thunk)));
+    WndProcHook::func = reinterpret_cast<WNDPROC>(
+        SetWindowLongPtrA(
+            sd.OutputWindow,
+            GWLP_WNDPROC,
+            reinterpret_cast<LONG_PTR>(WndProcHook::thunk)));
     if (!WndProcHook::func)
         logger::error("SetWindowLongPtrA failed!");
 

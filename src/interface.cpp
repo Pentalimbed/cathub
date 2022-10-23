@@ -10,7 +10,7 @@ ImGuiContext* CatHubInterface::getContext()
 }
 void CatHubInterface::addMenu(std::string name, std::function<void()> draw_func)
 {
-    CatMenu::GetSingleton()->AddMenu(name, draw_func);
+    CatMenu::GetSingleton()->addDrawCall(name, draw_func);
 }
 void CatHubInterface::addDrawCallback(std::function<void()> draw_func)
 {

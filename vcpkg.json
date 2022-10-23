@@ -1,21 +1,29 @@
 {
-    "name": "cathub",
-    "version-string": "1.0.0",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "name": "cathub-ng",
+    "version-string": "1.5.0",
+    "port-version": 0,
     "description": "",
     "homepage": "",
     "license": "MIT",
-    "dependencies": [
-        "boost-stl-interfaces",
-        "rsm-binary-io",
-        "spdlog",
-        "xbyak",
-        "nlohmann-json",
-        "tomlplusplus",
-        {
-            "name": "imgui",
-            "features": [
-                "win32-binding"
+    "features": {
+        "plugin": {
+            "description": "Build the SKSE plugin.",
+            "dependencies": [
+                "tomlplusplus",
+                "articuno",
+                "commonlibsse-ng",
+                "pcg",
+                {
+                    "name": "imgui",
+                    "features": [
+                        "win32-binding"
+                    ]
+                }
             ]
         }
+    },
+    "default-features": [
+        "plugin"
     ]
 }
