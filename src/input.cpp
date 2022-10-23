@@ -158,7 +158,7 @@ public:
 
 RE::BSEventNotifyControl InputListener::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
 {
-    if (!enabled.load() || !a_event || !a_eventSource)
+    if (!a_event || !a_eventSource)
         return RE::BSEventNotifyControl::kContinue;
 
     auto& io = ImGui::GetIO();

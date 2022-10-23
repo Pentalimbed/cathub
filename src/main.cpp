@@ -39,7 +39,6 @@ void postInitCallback()
     DXGIPresentHook::mid_callbacks.push_back([]() { CatMenu::GetSingleton()->draw(); });
     DXGIPresentHook::callback_mutex.unlock();
     CatMenu::GetSingleton()->notifyInit();
-    InputListener::GetSingleton()->enabled.store(true);
 }
 
 void processMessage(SKSE::MessagingInterface::Message* a_msg)

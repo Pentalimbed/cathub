@@ -36,7 +36,7 @@ public:
 private:
     inline CatMenu()
     {
-        config.readFile();
+        config.loadFile();
         logger::info("CatMenu initialized!");
     }
 

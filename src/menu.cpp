@@ -32,7 +32,7 @@ void CatMenu::draw()
     {
         ImGui::SetWindowSize({500, 400}, ImGuiCond_FirstUseEver);
 
-        ImGui::BeginChild("main", {0.f, -config.font_config.font_size - 2.f});
+        ImGui::BeginChild("main", {0.f, -ImGui::GetFontSize() - 2.f});
         if (ImGui::BeginTabBar("##"))
         {
             if (ImGui::BeginTabItem("Toggle Display"))
@@ -158,8 +158,13 @@ inline std::string modflag2String(ImGuiKeyModFlags modflag)
 
 void CatMenu::drawConfig()
 {
+    if (ImGui::Button("Reload Config"))
+        config.loadFile();
+    ImGui::SameLine();
     if (ImGui::Button("Save Config"))
         config.saveFile();
+
+    ImGui::Separator();
 
     if (ImGui::CollapsingHeader("Hotkeys"))
     {

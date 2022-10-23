@@ -7,7 +7,7 @@ namespace cathub
 class Config
 {
 public:
-    void readFile();
+    void loadFile();
     void saveFile();
 
     struct HotkeyConfig

@@ -10,7 +10,7 @@ const fs::path config_path = "CatHub.toml";
 
 namespace cathub
 {
-void Config::readFile()
+void Config::loadFile()
 {
     try
     {
