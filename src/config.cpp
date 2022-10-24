@@ -14,7 +14,7 @@ void Config::loadFile()
 {
     try
     {
-        auto tbl = toml::parse_file((plugin_dir / config_path).string());
+        auto tbl = toml::parse_file((plugin_dir / config_path).c_str());
 
         hotkey_config.toggle_key = tbl["hotkeys"]["toggle_key"].value_or<ImGuiKey>(ImGuiKey_Backslash);
         hotkey_config.toggle_mod = tbl["hotkeys"]["toggle_mod"].value_or<ImGuiKeyModFlags>(ImGuiKeyModFlags_None);

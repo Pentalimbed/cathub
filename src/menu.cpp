@@ -30,7 +30,7 @@ void CatMenu::draw()
 
     if (ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoCollapse))
     {
-        ImGui::SetWindowSize({500, 400}, ImGuiCond_FirstUseEver);
+        ImGui::SetWindowSize({400, 300}, ImGuiCond_FirstUseEver);
 
         ImGui::BeginChild("main", {0.f, -ImGui::GetFontSize() - 2.f});
         if (ImGui::BeginTabBar("##"))
@@ -62,13 +62,11 @@ void CatMenu::draw()
         }
         ImGui::EndChild();
 
-        ImGui::BeginChild("input bar");
         std::string keys_str = "";
         for (uint32_t key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; ++key)
             if (ImGui::IsKeyDown(key))
                 keys_str = (keys_str + ImGui::GetKeyName(key)) + ' ';
         ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "Pressed key(s) (in case they are stuck): %s", keys_str.c_str());
-        ImGui::EndChild();
     }
     else
         toggle(false);

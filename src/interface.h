@@ -12,8 +12,9 @@ public:
         return std::addressof(face);
     }
 
-    virtual ImGuiContext* getContext() override;
-    virtual void          addMenu(std::string name, std::function<void()> draw_func) override;
-    virtual void          addDrawCallback(std::function<void()> draw_func) override;
+    inline virtual REL::Version getVersion() override { return SKSE::PluginDeclaration::GetSingleton()->GetVersion(); }
+    virtual ImGuiContext*       getContext() override;
+    virtual void                addMenu(std::string name, std::function<void()> draw_func) override;
+    virtual void                addDrawCallback(std::function<void()> draw_func) override;
 };
 } // namespace cathub
