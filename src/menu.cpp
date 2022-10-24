@@ -28,7 +28,8 @@ void CatMenu::draw()
 
     // ImGui::ShowDemoWindow();
 
-    if (ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    if (ImGui::Begin(fmt::format("CatMenu (CatHub Ver. {})", SKSE::PluginDeclaration::GetSingleton()->GetVersion().string()).c_str(),
+                     &show, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
     {
         ImGui::SetWindowSize({400, 300}, ImGuiCond_FirstUseEver);
 
