@@ -28,7 +28,7 @@ void CatMenu::draw()
 
     // ImGui::ShowDemoWindow();
 
-    if (ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoCollapse))
+    if (ImGui::Begin("CatMenu", &show, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
     {
         ImGui::SetWindowSize({400, 300}, ImGuiCond_FirstUseEver);
 
