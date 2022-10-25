@@ -131,6 +131,8 @@ void CatMenu::loadFont()
     assert(io.Fonts->Build());
 
     ImGui_ImplDX11_ReCreateFontsTexture();
+
+    logger::info("Font loaded.");
 }
 
 void CatMenu::addDrawCall(std::string_view name, std::function<void()> draw_func)
