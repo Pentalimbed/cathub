@@ -172,7 +172,7 @@ RE::BSEventNotifyControl InputListener::ProcessEvent(RE::InputEvent* const* a_ev
         else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton)
         {
             const auto button = static_cast<RE::ButtonEvent*>(event);
-            if (!button || (!button->IsDown() && !button->IsUp()))
+            if (!button || (button->IsPressed() && !button->IsDown()))
                 continue;
 
             auto key = button->GetIDCode();
@@ -189,7 +189,7 @@ RE::BSEventNotifyControl InputListener::ProcessEvent(RE::InputEvent* const* a_ev
                     key += kMouseOffset;
                     break;
                 case RE::INPUT_DEVICE::kKeyboard:
-                    io.AddKeyEvent(ImGui_ImplWin32_VirtualKeyToImGuiKey(MapVirtualKeyEx(key, MAPVK_VSC_TO_VK, GetKeyboardLayout(0))), button->IsDown());
+                    io.AddKeyEvent(ImGui_ImplWin32_VirtualKeyToImGuiKey(MapVirtualKeyExW(key, MAPVK_VSC_TO_VK, GetKeyboardLayout(0))), button->IsPressed());
                     switch (key)
                     {
                         case DIK_LCONTROL:
