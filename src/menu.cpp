@@ -15,7 +15,7 @@ void CatMenu::draw()
         return;
 
     auto& io = ImGui::GetIO();
-    if (ImGui::IsKeyPressed(config.hotkey_config.toggle_key) && (io.KeyMods == config.hotkey_config.toggle_mod))
+    if (ImGui::IsKeyPressed(config.hotkey_config.toggle_key))
         toggle();
     io.MouseDrawCursor = show;
 
@@ -142,21 +142,6 @@ void CatMenu::addDrawCall(std::string_view name, std::function<void()> draw_func
     std::scoped_lock _l(draw_funcs_mutex);
     draw_funcs.push_back({std::string(name), draw_func, false});
 }
-
-inline std::string modflag2String(ImGuiKeyModFlags modflag)
-{
-    std::string mod_str = "";
-    if (modflag & ImGuiKeyModFlags_Ctrl)
-        mod_str = "Ctrl+" + mod_str;
-    if (modflag & ImGuiKeyModFlags_Shift)
-        mod_str = "Shift+" + mod_str;
-    if (modflag & ImGuiKeyModFlags_Alt)
-        mod_str = "Alt+" + mod_str;
-    if (modflag & ImGuiKeyModFlags_Super)
-        mod_str = "Super+" + mod_str;
-    return mod_str;
-}
-
 void CatMenu::drawConfig()
 {
     if (ImGui::Button("Reload Config"))
@@ -175,20 +160,12 @@ void CatMenu::drawConfig()
         {
             ImGui::Text("Waiting for input...");
             for (uint32_t key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; ++key)
-            {
-                // mod keys allowed
-                constexpr auto mod_keys = std::array{ImGuiKey_ModCtrl, ImGuiKey_ModShift, ImGuiKey_ModAlt, ImGuiKey_ModSuper};
-                if (std::ranges::find(mod_keys, key) != mod_keys.end())
-                    continue;
-
                 if (ImGui::IsKeyPressed(key))
                 {
                     auto io = ImGui::GetIO();
                     reset_toggle_key.store(false);
                     hotkey_config.toggle_key = key;
-                    hotkey_config.toggle_mod = io.KeyMods;
                 }
-            }
         }
         else
         {
@@ -197,7 +174,7 @@ void CatMenu::drawConfig()
 
             ImGui::SameLine();
             ImGui::AlignTextToFramePadding();
-            ImGui::Text(("Current: " + modflag2String(hotkey_config.toggle_mod) + ImGui::GetKeyName(hotkey_config.toggle_key)).c_str());
+            ImGui::Text(("Current: "s + ImGui::GetKeyName(hotkey_config.toggle_key)).c_str());
         }
     }
     if (ImGui::CollapsingHeader("Fonts"))

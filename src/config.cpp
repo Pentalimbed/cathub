@@ -16,8 +16,7 @@ void Config::loadFile()
     {
         auto tbl = toml::parse_file((plugin_dir / config_path).c_str());
 
-        hotkey_config.toggle_key = tbl["hotkeys"]["toggle_key"].value_or<ImGuiKey>(ImGuiKey_Backslash);
-        hotkey_config.toggle_mod = tbl["hotkeys"]["toggle_mod"].value_or<ImGuiKeyModFlags>(ImGuiKeyModFlags_None);
+        hotkey_config.toggle_key = tbl["hotkeys"]["toggle_key"].value_or<ImGuiKey>(ImGuiKey_F6);
 
         font_config.font_path        = tbl["fonts"]["font_path"].value_or<std::string>("");
         font_config.font_size        = tbl["fonts"]["font_size"].value_or<double>(13.0);
@@ -46,10 +45,7 @@ void Config::saveFile()
         return;
     }
     auto tbl = toml::table{
-        {"hotkeys", toml::table{
-                        {"toggle_key", hotkey_config.toggle_key},
-                        {"toggle_mod", hotkey_config.toggle_mod},
-                    }},
+        {"hotkeys", toml::table{{"toggle_key", hotkey_config.toggle_key}}},
         {"fonts", toml::table{
                       {"font_path", font_config.font_path},
                       {"font_size", font_config.font_size},

@@ -33,6 +33,8 @@ public:
 
     void addDrawCall(std::string_view name, std::function<void()> draw_func);
 
+    inline bool isShow() { return show; }
+
 private:
     inline CatMenu()
     {

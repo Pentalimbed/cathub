@@ -6,36 +6,38 @@
 
 #include <imgui.h>
 
+#include "menu.h"
+
 namespace cathub
 {
-enum : uint32_t
-{
-    kInvalid        = static_cast<uint32_t>(-1),
-    kKeyboardOffset = 0,
-    kMouseOffset    = 256,
-    kGamepadOffset  = 266,
-    kMaxOffset      = 282
-};
+// enum : uint32_t
+// {
+//     kInvalid        = static_cast<uint32_t>(-1),
+//     kKeyboardOffset = 0,
+//     kMouseOffset    = 256,
+//     kGamepadOffset  = 266,
+//     kMaxOffset      = 282
+// };
 
-enum
-{
-    kGamepadButtonOffset_DPAD_UP = kGamepadOffset, // 266
-    kGamepadButtonOffset_DPAD_DOWN,
-    kGamepadButtonOffset_DPAD_LEFT,
-    kGamepadButtonOffset_DPAD_RIGHT,
-    kGamepadButtonOffset_START,
-    kGamepadButtonOffset_BACK,
-    kGamepadButtonOffset_LEFT_THUMB,
-    kGamepadButtonOffset_RIGHT_THUMB,
-    kGamepadButtonOffset_LEFT_SHOULDER,
-    kGamepadButtonOffset_RIGHT_SHOULDER,
-    kGamepadButtonOffset_A,
-    kGamepadButtonOffset_B,
-    kGamepadButtonOffset_X,
-    kGamepadButtonOffset_Y,
-    kGamepadButtonOffset_LT,
-    kGamepadButtonOffset_RT // 281
-};
+// enum
+// {
+//     kGamepadButtonOffset_DPAD_UP = kGamepadOffset, // 266
+//     kGamepadButtonOffset_DPAD_DOWN,
+//     kGamepadButtonOffset_DPAD_LEFT,
+//     kGamepadButtonOffset_DPAD_RIGHT,
+//     kGamepadButtonOffset_START,
+//     kGamepadButtonOffset_BACK,
+//     kGamepadButtonOffset_LEFT_THUMB,
+//     kGamepadButtonOffset_RIGHT_THUMB,
+//     kGamepadButtonOffset_LEFT_SHOULDER,
+//     kGamepadButtonOffset_RIGHT_SHOULDER,
+//     kGamepadButtonOffset_A,
+//     kGamepadButtonOffset_B,
+//     kGamepadButtonOffset_X,
+//     kGamepadButtonOffset_Y,
+//     kGamepadButtonOffset_LT,
+//     kGamepadButtonOffset_RT // 281
+// };
 
 
 
@@ -202,6 +204,13 @@ RE::BSEventNotifyControl InputListener::ProcessEvent(RE::InputEvent* const* a_ev
                 case DIK_NUMPAD8: key = VK_NUMPAD8; break;
                 case DIK_NUMPAD9: key = VK_NUMPAD9; break;
                 case DIK_DECIMAL: key = VK_DECIMAL; break;
+                case DIK_NUMPADENTER: key = IM_VK_KEYPAD_ENTER; break;
+                case DIK_RMENU: key = VK_RMENU; break;       // right alt
+                case DIK_RCONTROL: key = VK_RCONTROL; break; // right control
+                case DIK_LWIN: key = VK_LWIN; break;         // left win
+                case DIK_RWIN: key = VK_RWIN; break;         // right win
+                case DIK_APPS: key = VK_APPS; break;
+                default: break;
             }
 
             switch (button->device.get())
@@ -214,30 +223,9 @@ RE::BSEventNotifyControl InputListener::ProcessEvent(RE::InputEvent* const* a_ev
                         if (scan_code > 5) scan_code = 5;
                         io.AddMouseButtonEvent(scan_code, button->IsPressed());
                     }
-                    scan_code += kMouseOffset;
                     break;
                 case RE::INPUT_DEVICE::kKeyboard:
                     io.AddKeyEvent(ImGui_ImplWin32_VirtualKeyToImGuiKey(key), button->IsPressed());
-                    switch (scan_code)
-                    {
-                        case DIK_LCONTROL:
-                        case DIK_RCONTROL:
-                            io.AddKeyEvent(ImGuiKey_ModCtrl, button->IsPressed());
-                            break;
-                        case DIK_LSHIFT:
-                        case DIK_RSHIFT:
-                            io.AddKeyEvent(ImGuiKey_ModShift, button->IsPressed());
-                            break;
-                        case DIK_LALT:
-                        case DIK_RALT:
-                            io.AddKeyEvent(ImGuiKey_ModAlt, button->IsPressed());
-                            break;
-                        case DIK_LWIN:
-                        case DIK_RWIN:
-                            io.AddKeyEvent(ImGuiKey_ModSuper, button->IsPressed());
-                            break;
-                        default: break;
-                    }
                     break;
                 case RE::INPUT_DEVICE::kGamepad:
                     // not implemented yet

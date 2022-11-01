@@ -12,8 +12,7 @@ public:
 
     struct HotkeyConfig
     {
-        ImGuiKey         toggle_key = ImGuiKey_Backslash;
-        ImGuiKeyModFlags toggle_mod = ImGuiKeyModFlags_None;
+        ImGuiKey toggle_key = ImGuiKey_F6;
     } hotkey_config;
 
     struct FontConfig
