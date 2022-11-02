@@ -8,7 +8,7 @@
 
 namespace cathub
 {
-constexpr REL::Version API_VER = {1, 5, 0, 0};
+constexpr REL::Version API_VER = {1, 6, 0, 0};
 
 class CatHubAPI
 {
@@ -17,6 +17,7 @@ public:
     virtual ImGuiContext* getContext()                                               = 0;
     virtual void          addMenu(std::string name, std::function<void()> draw_func) = 0; // for menus in CatMenu
     virtual void          addDrawCallback(std::function<void()> draw_func)           = 0; // for stuff outside CatMenu
+    virtual bool          isMenuOpen()                                               = 0;
 };
 
 [[nodiscard]] inline std::variant<cathub::CatHubAPI*, std::string> RequestCatHubAPI()

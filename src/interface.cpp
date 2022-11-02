@@ -18,4 +18,5 @@ void CatHubInterface::addDrawCallback(std::function<void()> draw_func)
     DXGIPresentHook::mid_callbacks.push_back(draw_func);
     DXGIPresentHook::callback_mutex.unlock();
 }
+bool CatHubInterface::isMenuOpen() { return CatMenu::GetSingleton()->isShow(); }
 } // namespace cathub
