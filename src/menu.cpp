@@ -29,7 +29,7 @@ void CatMenu::draw()
     // ImGui::ShowDemoWindow();
 
     if (ImGui::Begin(fmt::format("CatMenu (CatHub Ver. {})", SKSE::PluginDeclaration::GetSingleton()->GetVersion().string()).c_str(),
-                     &show, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+                     &show, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse))
     {
         ImGui::SetWindowSize({400, 300}, ImGuiCond_FirstUseEver);
 
@@ -67,7 +67,7 @@ void CatMenu::draw()
         for (uint32_t key = ImGuiKey_NamedKey_BEGIN; key < ImGuiKey_NamedKey_END; ++key)
             if (ImGui::IsKeyDown(key))
                 keys_str = (keys_str + ImGui::GetKeyName(key)) + ' ';
-        ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "Pressed key(s) (in case they are stuck): %s", keys_str.c_str());
+        ImGui::TextDisabled("Pressed key(s) (in case they are stuck): %s", keys_str.c_str());
     }
     else
         toggle(false);
@@ -144,16 +144,23 @@ void CatMenu::addDrawCall(std::string_view name, std::function<void()> draw_func
 }
 void CatMenu::drawConfig()
 {
-    if (ImGui::Button("Reload Config"))
-        config.loadFile();
-    ImGui::SameLine();
-    if (ImGui::Button("Save Config"))
-        config.saveFile();
+    if (ImGui::BeginTable("config", 2))
+    {
+        ImGui::TableNextColumn();
+        if (ImGui::Button("Reload Config", {-FLT_MIN, 0.f}))
+            config.loadFile();
+        ImGui::TableNextColumn();
+        if (ImGui::Button("Save Config", {-FLT_MIN, 0.f}))
+            config.saveFile();
+        ImGui::EndTable();
+    }
 
     ImGui::Separator();
 
     if (ImGui::CollapsingHeader("Hotkeys"))
     {
+        ImGui::Indent();
+
         auto& hotkey_config = config.hotkey_config;
 
         if (reset_toggle_key.load())
@@ -176,9 +183,13 @@ void CatMenu::drawConfig()
             ImGui::AlignTextToFramePadding();
             ImGui::Text(("Current: "s + ImGui::GetKeyName(hotkey_config.toggle_key)).c_str());
         }
+
+        ImGui::Unindent();
     }
     if (ImGui::CollapsingHeader("Fonts"))
     {
+        ImGui::Indent();
+
         auto& font_config = config.font_config;
 
         if (ImGui::Button("Refresh font"))
@@ -202,6 +213,8 @@ void CatMenu::drawConfig()
 
             ImGui::TreePop();
         }
+
+        ImGui::Unindent();
     }
 }
 } // namespace cathub
